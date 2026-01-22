@@ -32,7 +32,8 @@ class CRNNDataset(Dataset):
             # 讀取並排序圖片
             imgs = sorted([f for f in os.listdir(case_path) if f.endswith('.png')],
                           key=lambda x: int(os.path.splitext(x)[0]))
-            
+            ## key = lambda x : int(os.path.splitext(x)[0]) key為sorted看得值 lambda x : int將檔名視為 x轉化成int 並且由.來分割前後
+
             full_img_paths = [os.path.join(case_path, f) for f in imgs]
             
             # 處理 Label 路徑
@@ -58,7 +59,12 @@ class CRNNDataset(Dataset):
                         label_idx = i + 1
                         if label_idx < len(full_target_paths):
                             label_path = full_target_paths[label_idx]
-                    
+                        else:
+                        # --- 新增這段詳細警告 ---
+                            curr_img_name = os.path.basename(window_imgs[1])
+                            print(f"[Missing GT] Input: {curr_img_name} (in {os.path.basename(case_path)}) has no matching label!")
+                        
+                            label_path = None
                     samples.append((window_imgs, label_path))
                 
         return samples
@@ -96,6 +102,7 @@ class CRNNDataset(Dataset):
                 l_min, l_max = lap.min(), lap.max()
                 if l_max > l_min: lap = (lap - l_min) / (l_max - l_min)
                 
+                #cv.Sobel(	src, ddepth, dx, dy[, dst[, ksize[, scale[, delta[, borderType]]]]]	) ->	dst
                 sobelx = cv2.Sobel(src, cv2.CV_32F, 1, 0, ksize=ksize)
                 sobely = cv2.Sobel(src, cv2.CV_32F, 0, 1, ksize=ksize)
                 sobel = np.maximum(np.abs(sobelx), np.abs(sobely))
